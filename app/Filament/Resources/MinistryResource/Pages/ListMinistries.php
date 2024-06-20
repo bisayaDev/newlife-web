@@ -13,7 +13,11 @@ class ListMinistries extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->modalWidth('md')
+            ->label('New Life Ministry')
+            ->createAnother(false)
+            ->slideOver(),
         ];
     }
 }
