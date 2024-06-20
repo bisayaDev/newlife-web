@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('ministries', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
+            $table->string('name')->nullable();
             $table->unsignedInteger('ministry_head')->nullable();
             $table->boolean('status')->nullable();
             $table->string('mission')->nullable();
