@@ -13,7 +13,9 @@ class ListLifeGroups extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->label('New LifeGroup')
+            ->icon('heroicon-s-user-plus'),
         ];
     }
 }

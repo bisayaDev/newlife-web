@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\LifeGroupResource\Pages;
 use App\Filament\Resources\LifeGroupResource\RelationManagers;
 use App\Models\LifeGroup;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +13,13 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DatetimePicker;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+
 
 class LifeGroupResource extends Resource
 {
@@ -23,7 +31,25 @@ class LifeGroupResource extends Resource
     {
         return $form
             ->schema([
-                //
+                TextInput::make('name')
+                    ->required()
+                    ->label('Leader'),
+                DatePicker::make('schedule')
+                    ->label('Date Started')
+                    ->default(now())
+                    ->required(),
+                ToggleButtons::make('status')
+                    ->options([
+                        1 => "Active",
+                        0 => "Inactive",
+                    ])
+                    ->colors([
+                        1 => "success",
+                        0 => "danger",
+                    ])
+                    ->default(1)
+                    ->inline()
+                    ->grouped()
             ]);
     }
 
@@ -31,10 +57,37 @@ class LifeGroupResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('name')
+                ->label('Leader')
+                ->sortable(),
+                TextColumn::make('schedule')
+                    ->label('Date Started')
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => date_format(Carbon::make($state), 'M d, Y')),
+                TextColumn::make('status')
+                    ->label('Active')
+                    ->color(fn($state) => match($state)
+                    {
+                        1 => 'success',
+                        0 => 'danger'
+                    })
+                    ->formatStateUsing(function($state){
+                        if($state)
+                        {
+                            return 'YES';
+                        }
+                        else
+                        {
+                            return 'NO';
+                        }
+                    })
+                    ->badge(),
             ])
             ->filters([
-                //
+                Selectfilter::make('name')
+                ->searchable()
+                ->multiple()
+                ->label('Leader'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -57,8 +110,8 @@ class LifeGroupResource extends Resource
     {
         return [
             'index' => Pages\ListLifeGroups::route('/'),
-            'create' => Pages\CreateLifeGroup::route('/create'),
-            'edit' => Pages\EditLifeGroup::route('/{record}/edit'),
+//            'create' => Pages\CreateLifeGroup::route('/create'),
+//            'edit' => Pages\EditLifeGroup::route('/{record}/edit'),
         ];
     }
 }
