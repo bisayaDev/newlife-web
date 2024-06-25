@@ -5,8 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\LifeGroupResource\Pages;
 use App\Filament\Resources\LifeGroupResource\RelationManagers;
 use App\Models\LifeGroup;
+use App\Models\Members;
 use Carbon\Carbon;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -33,11 +35,13 @@ class LifeGroupResource extends Resource
             ->schema([
                 TextInput::make('name')
                     ->required()
-                    ->label('Leader'),
+                    ->label('Name'),
+                Select::make('leader')
+                    ->options(Members::all()->pluck('first_name','id'))
+                    ->label('Leader Name'),
                 DatePicker::make('schedule')
                     ->label('Date Started')
-                    ->default(now())
-                    ->required(),
+                    ->default(now()),
                 ToggleButtons::make('status')
                     ->options([
                         1 => "Active",
@@ -58,8 +62,12 @@ class LifeGroupResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                ->label('Leader')
-                ->sortable(),
+                    ->label('LifeGroup Name')
+                    ->sortable(),
+                TextColumn::make('leader')
+                    ->label('LifeGroup Leader')
+                    ->formatStateUsing(fn($state) => Members::find($state)->first_name . ' ' . Members::find($state)->last_name)
+                    ->sortable(),
                 TextColumn::make('schedule')
                     ->label('Date Started')
                     ->sortable()
@@ -102,7 +110,7 @@ class LifeGroupResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\MembersRelationManager::class
         ];
     }
 
@@ -111,7 +119,7 @@ class LifeGroupResource extends Resource
         return [
             'index' => Pages\ListLifeGroups::route('/'),
 //            'create' => Pages\CreateLifeGroup::route('/create'),
-//            'edit' => Pages\EditLifeGroup::route('/{record}/edit'),
+            'edit' => Pages\EditLifeGroup::route('/{record}/edit'),
         ];
     }
 }
