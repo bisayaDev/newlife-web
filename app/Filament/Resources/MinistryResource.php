@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MinistryResource\Pages;
 use App\Filament\Resources\MinistryResource\RelationManagers;
+use App\Models\Members;
 use App\Models\Ministry;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -32,34 +34,33 @@ class MinistryResource extends Resource
         return $form
             ->schema([
                 TextInput::make('name')
-                ->minLength(2)
-                ->label('Ministry Name')
-                ->required(),
-                TextInput::make('ministry_head')
-                ->numeric()
-                ->required()
-                ->label('Ministry Head'),
-                Textarea::make('mission') 
-                ->label('Mission')
-                ->rows(5) 
-                ->required(),
-                Textarea::make('vision') 
-                ->label('Vision')
-                ->rows(5) 
-                ->required(),
+                    ->minLength(2)
+                    ->label('Ministry Name')
+                    ->required(),
+                Select::make('ministry_head')
+                    ->options(Members::all()->pluck('first_name','id'))
+                    ->label('Ministry Head'),
+                Textarea::make('mission')
+                    ->label('Mission')
+                    ->rows(5)
+                    ->required(),
+                Textarea::make('vision')
+                    ->label('Vision')
+                    ->rows(5)
+                    ->required(),
                 ToggleButtons::make('status')
-                ->options([
-                    1 => "Active",
-                    0 => "Inactive",
-                ])
-                ->colors([
-                    1 => "success",
-                    0 => "danger",
-                ])
-                ->default(1)
-                ->inline()
-                ->grouped(),
-            ]);
+                    ->options([
+                        1 => "Active",
+                        0 => "Inactive",
+                    ])
+                    ->colors([
+                        1 => "success",
+                        0 => "danger",
+                    ])
+                    ->default(1)
+                    ->inline()
+                    ->grouped(),
+            ])->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -67,37 +68,42 @@ class MinistryResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                ->searchable()
-                ->sortable()
-                ->label('Ministry Name'),
+                    ->searchable()
+                    ->sortable()
+                    ->label('Ministry Name'),
                 TextColumn::make('ministry_head')
-                ->searchable()
-                ->sortable()
-                ->label('Ministry Head'),
+                    ->searchable()
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => Members::find($state)->first_name . ' ' . Members::find($state)->last_name)
+                    ->label('Ministry Head'),
                 TextColumn::make('status')
-                ->label('Active')
-                ->color(fn($state) => match($state)
-                    {
-                        1 => 'success',
-                        0 => 'danger'
+                    ->label('Active')
+                    ->color(fn($state) => match($state)
+                        {
+                            1 => 'success',
+                            0 => 'danger'
+                        })
+                    ->formatStateUsing(function($state){
+                        if($state)
+                        {
+                            return 'YES';
+                        }
+                        else
+                        {
+                            return 'NO';
+                        }
                     })
-                ->formatStateUsing(function($state){
-                    if($state)
-                    {
-                        return 'YES';
-                    }
-                    else
-                    {
-                        return 'NO';
-                    }
-                })
-                ->badge(),
+                    ->badge(),
                 TextColumn::make('mission')
-                ->label('Mission')
-                ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Mission')
+                    ->words(5)
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('vision')
-                ->label('Vision')
-                ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Vision')
+                    ->words(5)
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')
