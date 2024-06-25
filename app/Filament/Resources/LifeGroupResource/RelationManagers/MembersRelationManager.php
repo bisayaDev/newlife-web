@@ -1,11 +1,8 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\LifeGroupResource\RelationManagers;
 
-use App\Filament\Resources\MembersResource\Pages;
-use App\Filament\Resources\MembersResource\RelationManagers;
 use App\Models\LifeGroup;
-use App\Models\Members;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -13,27 +10,18 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
-use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
-use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\FiltersLayout;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Filters\Filter;
 
-class MembersResource extends Resource
+class MembersRelationManager extends RelationManager
 {
-    protected static ?string $model = Members::class;
+    protected static string $relationship = 'members';
 
-    protected static ?string $navigationIcon = 'heroicon-s-users';
-
-    public static function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -90,18 +78,16 @@ class MembersResource extends Resource
             ])->columns(1);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->recordTitleAttribute('first_name')
             ->columns([
                 TextColumn::make('first_name')
                     ->label('Fullname')
                     ->formatStateUsing(function($record){
                         return $record->last_name . ', ' . $record->first_name ;
                     }),
-                TextColumn::make('life_group_id')
-                        ->label('LifeGroup')
-                    ->formatStateUsing(fn($state) => LifeGroup::find($state)->name),
                 TextColumn::make('birthday')
                     ->sortable()
                     ->formatStateUsing(fn($state) => date_format(Carbon::make($state), 'M d, Y')),
@@ -124,10 +110,10 @@ class MembersResource extends Resource
                 TextColumn::make('status')
                     ->label('Active')
                     ->color(fn($state) => match($state)
-                        {
-                            1 => 'success',
-                            0 => 'danger'
-                        })
+                    {
+                        1 => 'success',
+                        0 => 'danger'
+                    })
                     ->formatStateUsing(function($state){
                         if($state)
                         {
@@ -143,54 +129,14 @@ class MembersResource extends Resource
 
             ])
             ->filters([
-                SelectFilter::make('civil_status')
-                    ->searchable()
-                    ->multiple()
-                    ->options([
-                        "single" => "Single",
-                        "married" => "Married",
-                        "widowed" => "Widowed",
-                        "divorced" => "Divorced",
-                        "separated" => "Separated"
-                    ])
-
+                //
+            ])
+            ->headerActions([
+//                Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make()
-                        ->label('Edit')
-                        ->icon('heroicon-s-pencil')
-                        ->slideOver()
-                        ->modalWidth('md'),
-                    DeleteAction::make()
-                        ->modalHeading(fn($record)=>'Delete member ' . $record->first_name)
-                        ->modalIcon('heroicon-s-user')
-                        ->modalIconColor('info')
-                        ->modalDescription(fn($record) => 'Are you sure you want to delete ' . $record->first_name . ' ' . $record->last_name . '????' )
-                        ->label('Delete')
-                        ->form([
-                            DatePicker::make('date_deleted')
-                                ->required()
-                        ])
-                        ->action(function($record, DeleteAction $action){
-
-                        }),
-                    Tables\Actions\Action::make('Notify Name')
-                        ->form([
-                            DatePicker::make('date_send')
-                        ])
-                        ->action(function($record, Tables\Actions\Action $action){
-                            $date_send = $action->getFormData()['date_send'];
-
-                            Notification::make('noty')
-                                ->title('The Name')
-                                ->success()
-                                ->body('Member ' . $record->first_name . ' was send ' . $date_send)
-                                ->duration(10000)
-                                ->send();
-                            })
-
-                ])
+                Tables\Actions\EditAction::make(),
+//                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -198,31 +144,4 @@ class MembersResource extends Resource
                 ]),
             ]);
     }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListMembers::route('/'),
-//            'create' => Pages\CreateMembers::route('/create'),
-//            'edit' => Pages\EditMembers::route('/{record}/edit'),
-        ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return Members::where('status',1)->count();
-    }
-
-    public static function getNavigationBadgeColor(): string|array|null
-    {
-        return 'success'; // TODO: Change the autogenerated stub
-    }
-
 }
